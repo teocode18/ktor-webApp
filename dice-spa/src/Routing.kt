@@ -1,3 +1,5 @@
+// Set up application routing & request handling
+
 import io.ktor.http.Parameters
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall

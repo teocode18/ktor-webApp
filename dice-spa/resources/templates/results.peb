@@ -1,3 +1,4 @@
+{# Template partial containing results of a dice roll #}
 <header><strong>Last Roll: {{ dice }}d{{ sides }}</strong></header>
 
 <p>You rolled:

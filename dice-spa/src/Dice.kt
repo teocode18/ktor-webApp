@@ -1,3 +1,5 @@
+// Dice simulators
+
 import kotlin.random.Random
 
 val sidesOptions = setOf(4, 6, 8, 10, 12, 20)

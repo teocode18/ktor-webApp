@@ -3,6 +3,7 @@
 <div class="grid">
   <div>
     <article>
+      {# Form to specify required dice roll, using htmx to post data to server #}
       <form hx-post="/roll" hx-target="#results" hx-swap="innerHTML">
         <label for="dice">Number of dice</label>
         <input type="number" id="dice" name="dice" min="1" max="10" step="1" value="3" required>
@@ -21,6 +22,7 @@
 
   <div>
     <article id="results">
+      {# Results of dice roll will be swapped in here #}
       <header><strong>Last Roll</strong></header>
       <p><em>None</em></p>
     </article>
