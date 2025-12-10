@@ -1,4 +1,8 @@
 {# Template partial containing results of a dice roll #}
+{# @pebvariable name="num" type="Int" #}
+{# @pebvariable name="die" type="String" #}
+{# @pebvariable name="results" type="IntArray" #}
+{# @pebvariable name="total" type="Int" #}
 <header><strong>Last Roll: {{ num }}{{ die }}</strong></header>
 
 <p>You rolled:
