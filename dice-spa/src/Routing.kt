@@ -18,22 +18,22 @@ fun Application.configureRouting() {
 
 private suspend fun ApplicationCall.displayForm() {
     respondTemplate("form.peb", model = mapOf(
-        "sidesOptions" to sidesOptions
+        "dieOptions" to dieOptions
     ))
 }
 
 private suspend fun ApplicationCall.handleDiceRoll() {
-    val (dice, sides) = extractParameters(receiveParameters())
-    val results = diceRoll(dice, sides)
+    val (num, die) = extractParameters(receiveParameters())
+    val results = diceRoll(num, die)
     respondTemplate("results.peb", model = mapOf(
-        "dice" to dice,
-        "sides" to sides,
+        "num" to num,
+        "die" to die,
         "results" to results,
         "total" to results.sum(),
     ))
 }
 
 private fun extractParameters(params: Parameters) = Pair(
-    params["dice"]?.toInt() ?: error("Number of dice not specified"),
-    params["sides"]?.toInt() ?: error("Number of sides not specified")
+    params["num"]?.toInt() ?: error("Number of dice not specified"),
+    params["die"] ?: error("Die not specified")
 )

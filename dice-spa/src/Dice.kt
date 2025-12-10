@@ -1,15 +1,36 @@
-// Dice simulators
+// Dice simulator
 
 import kotlin.random.Random
 
-val sidesOptions = setOf(4, 6, 8, 10, 12, 20)
+enum class Die(val sides: Int) {
+    Four(4),
+    Six(6),
+    Eight(8),
+    Ten(10),
+    Twelve(12),
+    Twenty(20);
 
-fun dieRoll(sides: Int): Int {
-    require(sides in sidesOptions) { "Invalid number of die sides: $sides" }
-    return Random.nextInt(sides) + 1
+    companion object {
+        fun fromString(name: String) = when (name) {
+            "d4" -> Four
+            "d6" -> Six
+            "d8" -> Eight
+            "d10" -> Ten
+            "d12" -> Twelve
+            "d20" -> Twenty
+            else -> throw IllegalArgumentException("invalid die: $name")
+        }
+    }
+
+    override fun toString() = "d$sides"
+
+    fun roll() = Random.nextInt(sides) + 1
 }
 
-fun diceRoll(numDice: Int, sides: Int): IntArray {
+val dieOptions = Die.entries.map { it.toString() }
+
+fun diceRoll(numDice: Int, dieName: String): IntArray {
     require(numDice > 0) { "Invalid number of dice: $numDice" }
-    return IntArray(numDice) { dieRoll(sides) }
+    val die = Die.fromString(dieName)
+    return IntArray(numDice) { die.roll() }
 }
