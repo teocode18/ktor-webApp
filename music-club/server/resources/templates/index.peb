@@ -1,0 +1,35 @@
+{% extends "base.peb" %}
+{% block head %}
+<script
+  src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"
+  integrity="sha384-/TgkGk7p307TH7EXJDuUlgG3Ce1UVolAOFopFekQkkXihi5u/6OCvVKyz1W+idaz"
+  crossorigin="anonymous"></script>
+{% endblock %}
+{% block content %}
+<p>Welcome to Music Club!</p>
+
+<p>Currently we hold information on <strong>{{ artists }} artists</strong>
+  and <strong>{{ albums }} albums</strong>.</p>
+
+<form role="search"
+  hx-post="/search"
+  hx-target="#search-results"
+  hx-swap="innerHTML"
+  hx-on::after-request="if(event.detail.successful) this.reset()">
+  <input
+    type="search"
+    name="search_term"
+    placeholder="Word(s) from album title"
+    aria-label="Search">
+  <input type="submit" value="Search">
+</form>
+
+<div id="search-results"></div>
+
+<nav>
+  <ul>
+    <li><a role="button" href="/artists">Browse Artists</a></li>
+    <li><a role="button" href="/albums">Browse Albums</a></li>
+  </ul>
+</nav>
+{% endblock %}

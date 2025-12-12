@@ -1,6 +1,6 @@
 # Ktor Examples
 
-Small examples of how to do various things using [Ktor][ktor].
+Examples of how to do various things using [Ktor][ktor].
 
 `static`: example of serving static content from the application classpath.
 
@@ -14,6 +14,9 @@ a fully interactive dice rolling application.
 
 `dice-spa`: alternative to `dice-roller`, operating as a single-page
 application, demonstrating the use of htmx and Pebble templates.
+
+`music-club`: a somewhat larger application, demonstrating the use of htmx
+and Pebble templates, the Exposed framework, and an SQLite database backend.
 
 
 [ktor]: https://ktor.io/

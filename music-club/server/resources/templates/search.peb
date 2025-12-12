@@ -1,0 +1,12 @@
+{% if searchTerm %}
+  <p>Search results for '{{ searchTerm }}':</p>
+  {% if results.count() == 0 %}
+  <p>No matching albums found.</p>
+  {% else %}
+  <ul>
+    {% for result in results %}
+    <li><a href="albums/{{ result.id }}">{{ result.title }}</a></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+{% endif %}

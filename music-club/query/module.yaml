@@ -1,0 +1,6 @@
+product: jvm/app
+
+dependencies:
+  - ../database
+  - org.jetbrains.exposed:exposed-core:0.61.0
+  - org.xerial:sqlite-jdbc:3.50.1.0

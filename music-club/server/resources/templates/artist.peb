@@ -1,0 +1,38 @@
+{% extends "base.peb" %}
+{% block title %}{{ name | default("?") }} - Music Club{% endblock %}
+{% block content %}
+{% if name is empty %}
+<p>No artist with this ID in the database!</p>
+{% else %}
+<h2>{{ name }}</h2>
+<p>{% if solo %}Solo artist{% else %}Band{% endif %}</p>
+{% if info %}
+<p><a href="{{ info }}">Further information</a></p>
+{% endif %}
+{% if albums is not empty %}
+<h3>Albums</h3>
+<table class="striped">
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Year of Release</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for album in albums %}
+    <tr>
+      <td><a href="/albums/{{ album.id }}">{{ album.title }}</a></td>
+      <td>{{ album.year }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endif %}
+<nav>
+  <ul>
+    <li><a role="button" href="/">Home</a></li>
+    <li><a role="button" href="/artists">Artists</a></li>
+  </ul>
+</nav>
+{% endblock %}

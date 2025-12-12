@@ -1,0 +1,6 @@
+ktor:
+    application:
+        modules:
+            - comp2850.music.server.ApplicationKt.module
+    deployment:
+        port: 8080

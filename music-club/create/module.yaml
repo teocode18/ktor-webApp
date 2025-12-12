@@ -1,0 +1,5 @@
+product: jvm/app
+
+dependencies:
+  - ../database
+  - org.xerial:sqlite-jdbc:3.50.1.0
