@@ -9,19 +9,20 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 fun main(args: Array<String>) {
-    val sqlLog = args.isNotEmpty() && args[0].lowercase() == "--sql"
+    val sqlLogging = args.isNotEmpty() && args[0].lowercase() == "--sql"
 
     transaction(MusicDatabase.db) {
-        if (sqlLog) {
+        if (sqlLogging) {
             addLogger(StdOutSqlLogger)
         }
 
         val artistCount = Artists.selectAll().count()
         val albumCount = Albums.selectAll().count()
-        val albums = (Albums innerJoin Artists).select(Artists.name, Albums.title)
 
         println("Artists found: $artistCount")
         println("Albums found: $albumCount")
+
+        val albums = (Albums innerJoin Artists).select(Artists.name, Albums.title)
 
         albums.forEach {
             println("${it[Artists.name]} - ${it[Albums.title]}")
