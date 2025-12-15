@@ -8,9 +8,13 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
-fun main() {
+fun main(args: Array<String>) {
+    val sqlLog = args.isNotEmpty() && args[0].lowercase() == "--sql"
+
     transaction(MusicDatabase.db) {
-        addLogger(StdOutSqlLogger)
+        if (sqlLog) {
+            addLogger(StdOutSqlLogger)
+        }
 
         val artistCount = Artists.selectAll().count()
         val albumCount = Albums.selectAll().count()
