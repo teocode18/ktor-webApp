@@ -16,7 +16,7 @@ a fully interactive dice rolling application.
 application, demonstrating the use of htmx and Pebble templates.
 
 `music-club`: a somewhat larger application, demonstrating the use of htmx
-and Pebble templates, the Exposed framework, and an SQLite database backend.
+and Pebble templates, the Exposed framework, and an H2 database backend.
 
 
 [ktor]: https://ktor.io/
