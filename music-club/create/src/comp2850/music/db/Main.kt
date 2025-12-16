@@ -26,12 +26,12 @@ fun main(args : Array<String>) {
         SchemaUtils.drop(Artists, Albums)
         SchemaUtils.create(Artists, Albums)
 
-        val artists = createArtists(ARTISTS_DATA)
-        createAlbums(ALBUMS_DATA, artists)
+        val artists = addArtists(ARTISTS_DATA)
+        addAlbums(ALBUMS_DATA, artists)
     }
 }
 
-fun createArtists(filename: String): NameToIdMap {
+fun addArtists(filename: String): NameToIdMap {
     FileReader(filename).use { reader ->
         val records = CSVFormat.DEFAULT.parse(reader).drop(1)
         val artists = NameToIdMap()
@@ -46,7 +46,7 @@ fun createArtists(filename: String): NameToIdMap {
     }
 }
 
-fun createAlbums(filename: String, artists: NameToIdMap) {
+fun addAlbums(filename: String, artists: NameToIdMap) {
     FileReader(filename).use { reader ->
         val records = CSVFormat.DEFAULT.parse(reader).drop(1)
         for (record in records) {
