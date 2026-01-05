@@ -70,7 +70,7 @@ private suspend fun ApplicationCall.loginPage() {
 
 private suspend fun ApplicationCall.login() {
     val username = principal<UserIdPrincipal>()?.name.toString()
-    application.log.info("User ${username} logged in")
+    application.log.info("User $username logged in")
     sessions.set(UserSession(username, 1))
     respondRedirect("/private")
 }
@@ -88,7 +88,7 @@ private suspend fun ApplicationCall.privatePage() {
 
 private suspend fun ApplicationCall.logout() {
     val username = principal<UserSession>()?.username.toString()
-    application.log.info("User ${username} logged out")
+    application.log.info("User $username logged out")
     sessions.clear<UserSession>()
     respondRedirect("/")
 }
