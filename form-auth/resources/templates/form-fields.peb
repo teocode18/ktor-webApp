@@ -1,4 +1,0 @@
-<label for="usernameField">Username</label>
-<input id="usernameField" name="username">
-<label for="passwordField">Password</label>
-<input id="passwordField" name="password" type="password">

@@ -1,6 +1,0 @@
-{% extends "base.peb" %}
-{% block content %}
-<h2>404 Page Not Found</h2>
-<p>Oh no!</p>
-<p>Looks like you've used an invalid URL...</p>
-{% endblock %}

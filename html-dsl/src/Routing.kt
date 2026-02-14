@@ -67,7 +67,7 @@ private fun loadBooksFromCopiesCsv(
 private fun sharedCss(): String = """
     body { font-family: Arial, sans-serif; margin: 0; background: #F2F2F2; color: #1A1A1A; }
     .wrap { max-width: 900px; margin: 40px auto; padding: 0 16px; }
-    .card { border: 2px solid #1A1A1A; padding: 24px; background: #F2F2F2; }
+    .card { border: 2px solid #1A1A1A; padding: 24px; background: #FFFFFF; }
     h1 { font-size: 40px; margin: 0 0 16px 0; }
     h2 { font-size: 34px; margin: 18px 0 8px 0; }
     label { font-weight: 700; display: block; margin: 12px 0 8px; font-size: 22px; }
@@ -78,8 +78,8 @@ private fun sharedCss(): String = """
     .results { margin-top: 18px; }
     .resultItem { display: flex; justify-content: space-between; padding: 14px; border: 2px solid #1A1A1A; background: #FFFFFF; margin-top: 12px; font-size: 20px; }
     .status { font-weight: 800; }
-    .available { color: #2E7D32; }
-    .onloan { color: #C45A00; }
+    .available { color: #006400; }
+    .onloan { color: #A04000; }
     .msg { margin-top: 14px; font-weight: 800; font-size: 20px; }
 """.trimIndent()
 
@@ -92,6 +92,7 @@ private fun FlowContent.resultRow(title: String, statusText: String, isAvailable
 
 private fun HTML.renderPage(
     pageTitle: String,
+    sectionHeading: String,
     books: List<Book>,
     query: String,
     results: List<Book>,
@@ -124,7 +125,7 @@ private fun HTML.renderPage(
                 }
 
                 div("results") {
-                    h2 { +"Results..." }
+                    h2 { +sectionHeading }
 
                     when {
                         books.isEmpty() ->
@@ -164,6 +165,7 @@ fun Application.configureRouting() {
                 val preview = books.take(5)
                 renderPage(
                     pageTitle = "Library Search",
+                    sectionHeading = "Library Highlights",
                     books = books,
                     query = "",
                     results = preview,
@@ -190,6 +192,7 @@ fun Application.configureRouting() {
             call.respondHtml {
                 renderPage(
                     pageTitle = "Search Results",
+                    sectionHeading = "Results",
                     books = books,
                     query = query,
                     results = results,
