@@ -4,7 +4,7 @@ Examples of how to do various things using [Ktor][ktor].
 
 `static`: example of serving static content from the application classpath.
 
-`testing`: example of automated testing for a Ktor server.
+`testing`: example of automated testing for a Ktor server.  
 
 `html-dsl`: example of how a Ktor application can use a DSL to construct
 an HTML document dynamically and deliver it to a client.
