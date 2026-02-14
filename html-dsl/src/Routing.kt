@@ -1,10 +1,13 @@
 import io.ktor.server.application.*
 import io.ktor.server.html.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.http.*
 import kotlinx.html.*
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.net.URLEncoder
 
 // ---------- Resource helpers ----------
 private fun readResourceLines(path: String): List<String> {
@@ -12,7 +15,6 @@ private fun readResourceLines(path: String): List<String> {
     return BufferedReader(InputStreamReader(stream)).readLines()
 }
 
-// Basic CSV splitter (handles quoted commas)
 private fun splitCsvLine(line: String): List<String> {
     val out = mutableListOf<String>()
     val sb = StringBuilder()
@@ -21,7 +23,10 @@ private fun splitCsvLine(line: String): List<String> {
     for (ch in line) {
         when (ch) {
             '"' -> inQuotes = !inQuotes
-            ',' -> if (inQuotes) sb.append(ch) else { out.add(sb.toString()); sb.setLength(0) }
+            ',' -> if (inQuotes) sb.append(ch) else {
+                out.add(sb.toString())
+                sb.setLength(0)
+            }
             else -> sb.append(ch)
         }
     }
@@ -29,17 +34,7 @@ private fun splitCsvLine(line: String): List<String> {
     return out
 }
 
-/**
- * Your CSV is a "copies" list:
- * title,author,isbn_13,format_code,location_code,notes
- *
- * We convert it into unique titles and mark availability using loaned_titles.txt.
- */
-private fun loadBooksFromCopiesCsv(
-    csvResource: String,
-    loanedTitlesResource: String
-): List<Book> {
-
+private fun loadTitlesFromCopiesCsv(csvResource: String): List<String> {
     val lines = readResourceLines(csvResource)
     if (lines.isEmpty()) return emptyList()
 
@@ -47,56 +42,71 @@ private fun loadBooksFromCopiesCsv(
     val titleIdx = header.indexOf("title")
     if (titleIdx == -1) return emptyList()
 
-    val loanedSet = readResourceLines(loanedTitlesResource)
-        .map { it.trim() }
-        .filter { it.isNotBlank() }
-        .toSet()
-
-    val titles = lines.drop(1).mapNotNull { line ->
+    return lines.drop(1).mapNotNull { line ->
         val cols = splitCsvLine(line)
-        if (cols.size <= titleIdx) null else cols[titleIdx].trim().takeIf { it.isNotBlank() }
+        if (cols.size <= titleIdx) null
+        else cols[titleIdx].trim().takeIf { it.isNotBlank() }
     }.distinct()
-
-    return titles.map { title ->
-        val isOnLoan = loanedSet.contains(title)
-        Book(title = title, available = !isOnLoan)
-    }
 }
 
-// ---------- Shared CSS + UI ----------
+// ---------- HTML escape helper (for autocomplete) ----------
+private fun htmlEscape(s: String): String =
+    s.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace("\"", "&quot;")
+        .replace("'", "&#39;")
+
+// ---------- Shared CSS ----------
 private fun sharedCss(): String = """
     body { font-family: Arial, sans-serif; margin: 0; background: #F2F2F2; color: #1A1A1A; }
     .wrap { max-width: 900px; margin: 40px auto; padding: 0 16px; }
-    .card { border: 2px solid #1A1A1A; padding: 24px; background: #FFFFFF; }
+    .card { border: 2px solid #1A1A1A; padding: 24px; background: #F2F2F2; }
     h1 { font-size: 40px; margin: 0 0 16px 0; }
     h2 { font-size: 34px; margin: 18px 0 8px 0; }
     label { font-weight: 700; display: block; margin: 12px 0 8px; font-size: 22px; }
     .searchRow { display: flex; gap: 16px; align-items: center; }
     input[type="text"] { flex: 1; font-size: 22px; padding: 14px; border: 2px solid #1A1A1A; background: #FFFFFF; }
     button { font-size: 22px; padding: 14px 22px; border: 2px solid #1A1A1A; background: #FFFFFF; cursor: pointer; }
-    button:focus, input:focus { outline: 3px solid #1A1A1A; outline-offset: 2px; }
     .results { margin-top: 18px; }
     .resultItem { display: flex; justify-content: space-between; padding: 14px; border: 2px solid #1A1A1A; background: #FFFFFF; margin-top: 12px; font-size: 20px; }
     .status { font-weight: 800; }
-    .available { color: #006400; }
-    .onloan { color: #A04000; }
+    .available { color: #2E7D32; }
+    .onloan { color: #C45A00; }
     .msg { margin-top: 14px; font-weight: 800; font-size: 20px; }
 """.trimIndent()
 
-private fun FlowContent.resultRow(title: String, statusText: String, isAvailable: Boolean) {
+// ---------- Book row ----------
+private fun FlowContent.resultRow(title: String, isAvailable: Boolean) {
     div("resultItem") {
         span { +title }
-        span(classes = "status " + if (isAvailable) "available" else "onloan") { +statusText }
+
+        div {
+            span(classes = "status " + if (isAvailable) "available" else "onloan") {
+                +(if (isAvailable) "Available" else "On loan")
+            }
+
+            if (isAvailable) {
+                +" "
+                form(action = "/borrow", method = FormMethod.post) {
+                    style = "display:inline-block; margin-left: 12px;"
+                    hiddenInput(name = "title") { value = title }
+                    button(type = ButtonType.submit) { +"Borrow" }
+                }
+            }
+        }
     }
 }
 
+// ---------- Page renderer ----------
 private fun HTML.renderPage(
     pageTitle: String,
     sectionHeading: String,
     books: List<Book>,
     query: String,
     results: List<Book>,
-    message: String?
+    message: String?,
+    returnMessage: String?
 ) {
     head {
         title(pageTitle)
@@ -108,36 +118,61 @@ private fun HTML.renderPage(
 
             div("card") {
 
-                // Search bar shown on BOTH pages
+                // Search form + autocomplete
                 form(action = "/search", method = FormMethod.get) {
-                    label {
-                        attributes["for"] = "title"
-                        +"Search for Book"
-                    }
+                    label { +"Search for Book" }
+
                     div("searchRow") {
                         textInput(name = "title") {
-                            id = "title"
                             value = query
                             placeholder = "Enter book title..."
+                            attributes["list"] = "titles"
                         }
-                        button(type = ButtonType.submit) { +"Search" }
+                        button { +"Search" }
+                    }
+
+                    // Autocomplete list (raw HTML so it compiles)
+                    unsafe {
+                        +buildString {
+                            append("""<datalist id="titles">""")
+                            books.take(500).forEach { b ->
+                                val t = htmlEscape(b.title)
+                                append("""<option value="$t"></option>""")
+                            }
+                            append("</datalist>")
+                        }
                     }
                 }
 
+                // Results
                 div("results") {
                     h2 { +sectionHeading }
 
                     when {
-                        books.isEmpty() ->
-                            p("msg") { +"No books loaded. Check resources/LibraryBookList.csv and resources/loaned_titles.txt." }
-
                         message != null ->
                             p("msg") { +message }
-
                         else ->
                             results.forEach { b ->
-                                resultRow(b.title, if (b.available) "Available" else "On loan", b.available)
+                                resultRow(b.title, b.available)
                             }
+                    }
+                }
+
+                // Return section
+                div("results") {
+                    h2 { +"Return a book" }
+
+                    if (returnMessage != null) {
+                        p("msg") { +returnMessage }
+                    }
+
+                    form(action = "/return", method = FormMethod.post) {
+                        div("searchRow") {
+                            textInput(name = "code") {
+                                placeholder = "Enter request number (e.g. 001)"
+                            }
+                            button { +"Return" }
+                        }
                     }
                 }
 
@@ -148,44 +183,96 @@ private fun HTML.renderPage(
     }
 }
 
-// ---------- Ktor routing ----------
+// ---------- Routing ----------
 fun Application.configureRouting() {
 
-    // CSV + loaned titles
-    val books = loadBooksFromCopiesCsv(
-        csvResource = "/LibraryBookList.csv",
-        loanedTitlesResource = "/loaned_titles.txt"
-    )
+    val titles = loadTitlesFromCopiesCsv("/LibraryBookList.csv")
+
+    val loanedTitles = mutableSetOf<String>()
+    val activeRequests = mutableMapOf<String, String>() // code -> title
+
+    var requestCounter = 1
+
+    fun currentBooks(): List<Book> =
+        titles.map { t -> Book(title = t, available = !loanedTitles.contains(t)) }
+
+    fun nextRequestCode(): String = "%03d".format(requestCounter++)
 
     routing {
 
-        // Home page: show first few books
+        // Borrow: create code, mark on loan, redirect with code
+        post("/borrow") {
+            val params = call.receiveParameters()
+            val title = params["title"]?.trim().orEmpty()
+
+            val code = nextRequestCode()
+            loanedTitles.add(title)
+            activeRequests[code] = title
+
+            val safe = URLEncoder.encode(title, "UTF-8")
+            call.respondRedirect("/search?title=$safe&borrowed=$code")
+        }
+
+        // Return: must enter correct code. Redirect includes title for message.
+        post("/return") {
+            val params = call.receiveParameters()
+            val code = params["code"]?.trim().orEmpty()
+
+            val title = activeRequests[code]
+            if (title != null) {
+                loanedTitles.remove(title)
+                activeRequests.remove(code)
+
+                val safeTitle = URLEncoder.encode(title, "UTF-8")
+                call.respondRedirect("/search?returned=$code&book=$safeTitle")
+            } else {
+                call.respondRedirect("/search?return_error=1")
+            }
+        }
+
+        // Home page
         get("/") {
+            val books = currentBooks()
             call.respondHtml {
-                val preview = books.take(5)
                 renderPage(
                     pageTitle = "Library Search",
                     sectionHeading = "Library Highlights",
                     books = books,
                     query = "",
-                    results = preview,
-                    message = null
+                    results = books.take(5),
+                    message = null,
+                    returnMessage = null
                 )
             }
         }
 
-        // Search page: styled the same as home page
+        // Search page
         get("/search") {
             val query = call.request.queryParameters["title"]?.trim().orEmpty()
+            val borrowedCode = call.request.queryParameters["borrowed"]
+            val returnedCode = call.request.queryParameters["returned"]
+            val returnedBook = call.request.queryParameters["book"]
+            val returnError = call.request.queryParameters["return_error"]
+
+            val books = currentBooks()
 
             val results =
                 if (query.isBlank()) emptyList()
                 else books.filter { it.title.contains(query, ignoreCase = true) }
 
             val message = when {
-                books.isEmpty() -> null // handled inside renderPage
-                query.isBlank() -> "Please enter a title."
-                results.isEmpty() -> "No books found."
+                borrowedCode != null ->
+                    "Please get your book at reception. Request number: $borrowedCode"
+                results.isEmpty() && query.isNotBlank() ->
+                    "No books found."
+                else -> null
+            }
+
+            val returnMessage = when {
+                returnedCode != null && returnedBook != null ->
+                    "Return successful. \"$returnedBook\" has been returned. Code $returnedCode confirmed."
+                returnError != null ->
+                    "Invalid request number."
                 else -> null
             }
 
@@ -196,7 +283,8 @@ fun Application.configureRouting() {
                     books = books,
                     query = query,
                     results = results,
-                    message = message
+                    message = message,
+                    returnMessage = returnMessage
                 )
             }
         }
