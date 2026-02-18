@@ -12,3 +12,7 @@ The application allows users to:
 - Support typical library workflows for customers and staff  
 
 This project focuses on applying database design principles, system modelling, and user-centred design.
+
+Build and run the server with
+
+    ./amper run
